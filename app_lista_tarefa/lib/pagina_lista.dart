@@ -1,7 +1,6 @@
 import 'package:app_lista_tarefa/modelo/objeto_data_hora.dart';
 import 'package:app_lista_tarefa/widgets/itens_lista.dart';
 import 'package:flutter/material.dart';
-import 'package:app_lista_tarefa/modelo/objeto_data_hora.dart';
 
 class Pagina_lista extends StatefulWidget {
   @override
@@ -12,6 +11,8 @@ class _Pagina_listaState extends State<Pagina_lista> {
   final TextEditingController mensagensControlador = TextEditingController();
 
   List<Data_Hora> Mensagens = [];
+  Data_Hora? deletar_itens;
+  int? posicao_atual_deletar;
 
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,12 +37,14 @@ class _Pagina_listaState extends State<Pagina_lista> {
                   ElevatedButton(
                     onPressed: () {
                       String qualquercoisa = mensagensControlador.text;
-                      mensagensControlador.clear();
-                      setState((){
-                       Data_Hora ItemDataHora = DataHora(
-                          titulo: qualquercoisa, DataHora: DateTime.now());
-                        Mensagens.add(ItemDataHora); // Adicionando valores na lista Mensagens
+
+                      setState(() {
+                        Data_Hora item_data_hora = Data_Hora(
+                            titulo: qualquercoisa, data_hora: DateTime.now());
+                        Mensagens.add(item_data_hora);
                       });
+
+                      mensagensControlador.clear();
                     },
                     style: ElevatedButton.styleFrom(
                         primary: Color(0xff0ffa00),
@@ -61,8 +64,9 @@ class _Pagina_listaState extends State<Pagina_lista> {
                   shrinkWrap: true,
                   children: [
                     for (Data_Hora mensagem_controle in Mensagens)
-                      tudoItemLista(
+                      TudoItemLista(
                         mensagem_data_hora: mensagem_controle,
+                        item_deletar_tarefas: deletar_tarefas,
                       ),
                   ],
                 ),
@@ -73,11 +77,16 @@ class _Pagina_listaState extends State<Pagina_lista> {
               Row(
                 children: [
                   Expanded(
-                    child: Text("Você possui 0 tarefas pendentes"),
+                    child: Text(
+                        "Você possui ${Mensagens.length} tarefas pendentes"),
                   ),
                   SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      setState(() {
+                        mensagem_confimacao();
+                      });
+                    },
                     style: ElevatedButton.styleFrom(
                         primary: Color(0xff0ffa00),
                         padding: EdgeInsets.all(20)),
@@ -89,6 +98,59 @@ class _Pagina_listaState extends State<Pagina_lista> {
           ),
         ),
       ),
+    );
+  }
+
+  void deletar_tarefas(Data_Hora item_data_hora) {
+    deletar_itens = item_data_hora;
+    posicao_atual_deletar = Mensagens.indexOf(item_data_hora);
+    setState(() {
+      Mensagens.remove(item_data_hora);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "Tarefa ${item_data_hora.titulo} foi removida com sucesso",
+          style: TextStyle(color: Colors.green),
+        ),
+        backgroundColor: Color.fromARGB(255, 0, 36, 107),
+        action: SnackBarAction(
+          textColor: Colors.green,
+          label: "Desfazer",
+          onPressed: () {
+            Mensagens.insert(posicao_atual_deletar!, deletar_itens!);
+          },
+        ),
+      ),
+    );
+  }
+
+  void mensagem_confimacao() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Limpar tudo?"),
+          content: Text("Você tem certeza que deseja apagar todas as tarefas?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("Cancelar"),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  Navigator.pop(context);
+                  Mensagens.clear();
+                });
+              },
+              child: Text("Limpar tudo"),
+            ),
+          ],
+        );
+      },
     );
   }
 }
